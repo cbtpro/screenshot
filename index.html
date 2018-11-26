@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>User Application</title>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-size: 14px;
+            font-family: sans-serif;
+            color: #111;
+            background-color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+    <div>
+        <label>画笔宽度</label>
+        <input type="number" id="brushWidth" onchange="changeLineWidth(value)" />
+        <label>画笔颜色</label>
+        <select type="select" id="brushColor" onchange="changeBrushColor(value)">
+            <option value="#000">#000</option>
+            <option value="red">red</option>
+            <option value="rgb(0, 255, 0)">rgb(25, 12, 0)</option>
+            <option value="rgba(255, 0, 0, 0.1)">rgba(255, 0, 0, 0.1)</option>
+        </select>
+        <button>橡皮檫</button>
+        <button>清除画布</button>
+        <button onclick="screenshot()">截图</button>
+    </div>
+    <script>
+        var changeLineWidth;
+        var changeBrushColor;
+        var screenshot;
+        document.addEventListener('DOMContentLoaded', function() {
+            var elem = document.getElementById('app');
+            let screenshotInstance = new Screenshot(elem, {
+                width: 400,
+                height: 400
+            });
+            // initialize
+            screenshotInstance.init({
+                strokeStyle: 'yellow',
+                lineWidth: 1
+            });
+            //screenshotInstance.setStrokeStyle('red');
+            //screenshotInstance.setLineWidth(20);
+            //screenshotInstance.screenshot();
+            changeLineWidth = function(value) {
+                screenshotInstance.setLineWidth(value);
+            }
+            changeBrushColor = function(value) {
+                screenshotInstance.setStrokeStyle(value);
+            }
+            screenshot = function() {
+                screenshotInstance.screenshot(screenshotInstance.canvas, {
+                    x: 0,
+                    y: 0,
+                    width: 1000,
+                    height: 1000
+                }).then(function(canvas) {
+                    document.body.append(canvas);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
