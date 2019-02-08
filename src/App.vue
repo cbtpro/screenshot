@@ -1,17 +1,35 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <img class="logo" alt="Vue logo" src="./assets/logo.png">
+    <iframe src="https://www.baidu.com" frameborder="0" width="100%" height="400"></iframe>
+    <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
+    <component :is="isScreenshot" :css="screenshotStyles" />
+    <button @click="doScreenshot">开启/关闭截图</button>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+// import HelloWorld from './components/HelloWorld.vue'
+import Screenshot from "@/components/Screenshot";
 
 export default {
   name: 'app',
   components: {
-    HelloWorld
+    // HelloWorld,
+    Screenshot
+  },
+  data() {
+    return {
+      isScreenshot: 'screenshot',
+      screenshotStyles: {
+        zIndex: 9999
+      }
+    }
+  },
+  methods: {
+    doScreenshot() {
+      this.isScreenshot = this.isScreenshot?'':'screenshot';
+    }
   }
 }
 </script>
@@ -24,5 +42,12 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+#app .logo {
+  transform: translate3d(20px, 20px, 0);
+}
+#app .logo:hover {
+  transition: all 2s;
+  transform: rotate(-180deg);
 }
 </style>
