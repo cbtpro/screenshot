@@ -10,7 +10,7 @@
 
 <script>
 // import HelloWorld from './components/HelloWorld.vue'
-import Screenshot from "@/components/Screenshot";
+import Screenshot from "@/components/screenshot/Screenshot";
 
 export default {
   name: 'app',

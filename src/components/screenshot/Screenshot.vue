@@ -3,24 +3,23 @@
     <div
       class="screenshot-btn"
       @click="startScreenshot"
-      @mousedown="screenshotBtnMoveStart"
-      @mousemove="screenshotBtnMove"
-      @mouseup="screenshotBtnMoveEnd"
-      @touchstart="screenshotBtnMoveStart"
-      @touchmove="screenshotBtnMove"
-      @touchend="screenshotBtnMoveEnd"
       :style="screenshotBtnStyles()"
     >
       <div class="screenshot-btn-circle"></div>
     </div>
+    <screenshot-canvas></screenshot-canvas>
   </div>
 </template>
 
 <script>
+import Canvas from './Canvas'
 // import CanvasFreeDrawing  from 'canvas-free-drawing';
 
 export default {
   name: "Screenshot",
+  components: {
+    ScreenshotCanvas: Canvas
+  },
   props: {
     css: {
       type: Object,
@@ -46,7 +45,6 @@ export default {
     },
     // 截图按钮拖动位置
     screenshotBtnMoveStart() {
-      let currentTarget = event.currentTarget
       // event.buttons相关文档 https://developer.mozilla.org/zh-CN/docs/Web/API/MouseEvent/buttons
       if (event.type === 'mousedown' && event.buttons === 1) {
         const { pageX, pageY } = event;
@@ -59,10 +57,11 @@ export default {
         this.previousY = pageY;
         this.touchIdentifier = identifier;
       }
+      event.preventDefault()
     },
     screenshotBtnMove() {
       if (event.type === 'mousemove' && event.buttons === 1) {
-        const { currentTarget, pageX, pageY } = event;
+        const { pageX, pageY } = event;
         let moveX = pageX - this.previousX;
         let moveY = pageY - this.previousY;
         this.screenshotBtnPos.top = this.screenshotBtnPos.top + moveY;
@@ -103,6 +102,20 @@ export default {
     startScreenshot() {}
   },
   mounted() {
+    document.addEventListener('mousedown', this.screenshotBtnMoveStart);
+    document.addEventListener('mousemove', this.screenshotBtnMove);
+    document.addEventListener('mouseup', this.screenshotBtnMoveEnd);
+    document.addEventListener('touchstart', this.screenshotBtnMoveStart);
+    document.addEventListener('touchmove', this.screenshotBtnMove);
+    document.addEventListener('touchend', this.screenshotBtnMoveEnd);
+  },
+  beforeDestroy() {
+    document.removeEventListener('mousedown', this.screenshotBtnMoveStart);
+    document.removeEventListener('mousemove', this.screenshotBtnMove);
+    document.removeEventListener('mouseup', this.screenshotBtnMoveEnd);
+    document.removeEventListener('touchstart', this.screenshotBtnMoveStart);
+    document.removeEventListener('touchmove', this.screenshotBtnMove);
+    document.removeEventListener('touchend', this.screenshotBtnMoveEnd);
   }
 };
 </script>
@@ -112,13 +125,14 @@ export default {
   z-index: 999;
 }
 .screenshot-btn {
-  position: absolute;
+  position: fixed;
   width: 48px;
   height: 48px;
   border-radius: 4px;
   background-color: #c9cdd29c;
   opacity: 0.5;
-  cursor: move;
+  cursor: pointer;
+  /**transition: all 0.1s ease;*/
 }
 .screenshot-btn-circle {
   width: 40px;
