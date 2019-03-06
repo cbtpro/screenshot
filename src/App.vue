@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <img class="logo" alt="Vue logo" src="./assets/logo.png">
-    <iframe src="https://www.baidu.com" frameborder="0" width="100%" height="400"></iframe>
+    <iframe src="/" frameborder="0" width="100%" height="400"></iframe>
     <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
     <component :is="isScreenshot" :css="screenshotStyles" />
     <button @click="doScreenshot">开启/关闭截图</button>
