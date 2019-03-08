@@ -16,6 +16,7 @@
         </div>
       </div>
     </div>
+    <!-- <font-awesome-icon icon="coffee" /> -->
     <dir ref="canvasPad" :is="canvasComponent" :brush-type="currentOperatorType" :background="background" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%"></dir>
     <div :is="clipperComponent" :style="clipperComponentStyles()" @do-screenshot="afterScreenshot"></div>
     <drawing-tool></drawing-tool>
@@ -27,7 +28,7 @@ import html2canvas from 'html2canvas'
 import Canvas from './Canvas'
 import Clipper from './Clipper'
 import DrawingTool from './DrawingTool'
-import '@/assets/font-awesome/css/font-awesome.min.css'
+
 export default {
   components: {
     CanvasPad: Canvas,
