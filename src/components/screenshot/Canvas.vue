@@ -1,56 +1,44 @@
 <template>
-  <canvas id="canvasPad">{{ notSupportCanvas }}</canvas>
+  <canvas id="canvasPad" ref="screenshotCanvas"></canvas>
 </template>
 
 <script>
 import CanvasHelper from './CanvasHelper'
+
 export default {
-  props: {
-    background: {
-      type: HTMLCanvasElement,
-      required: true
-    },
-    brushType: {
-      type: String,
-      required: false,
-      default: 'bursh'
-    }
+  components: {
   },
   data() {
     return {
-      notSupportCanvas:
-        "Sorry, your browser doesn't support the &lt;canvas&gt; element.",
-      canvasPadDrawing: null
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 0,
+      canvasPad: null
+    };
+  },
+  created() {
+    
+  },
+  methods: {
+    seta() {
+      this.canvasPad.set()
     }
   },
   mounted() {
-    let canvasPad = document.querySelector('#canvasPad')
-    let canvasPadWidth = canvasPad.offsetWidth
-    let canvaspadHeight = canvasPad.offsetHeight
-    this.canvasPadDrawing = new CanvasHelper({
+    this.canvasPad = new CanvasHelper({
       id: 'canvasPad',
-      width: canvasPadWidth,
-      height: canvaspadHeight,
-      background: this.background,
-      brushType: this.brushType
+      width: 300,
+      height: 300
     })
-  },
-  methods: {
-    setBrushType(brushType = 'brush') {
-      this.canvasPadDrawing.setBrushType(brushType)
-    },
-    setLineWidth(lineWidth = 5) {
-      this.canvasPadDrawing.setLineWidth(lineWidth)
-    },
-    setEraserSize(eraserSize = 20) {
-      this.canvasPadDrawing.setEraserSize(eraserSize)
-    },
-    setStrokeStyle(color) {
-      this.canvasPadDrawing.setStrokeStyle(color)
-    }
   }
-}
+};
 </script>
 
-<style lang="less" scoped>
+<style scoped>
+canvas {
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+}
 </style>

@@ -1,46 +1,60 @@
 <template>
   <div id="app">
-    <img class="logo" alt="Vue logo" src="./assets/logo.png">
-    <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
-    <component :is="isScreenshot" :css="screenshotStyles" />
-    <button @click="doScreenshot">开启/关闭截图</button>
+    <img
+      class="logo"
+      alt="Vue logo"
+      src="./assets/logo.png"
+    >
+    <HelloWorld msg="Welcome to Your Vue.js App" />
+    <component
+      :is="isScreenshot"
+      :css="screenshotStyles"
+    />
   </div>
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue'
+import HelloWorld from "./components/HelloWorld.vue";
 import Screenshot from "@/components/screenshot/Screenshot";
 
 export default {
-  name: 'app',
+  name: "app",
   components: {
-    // HelloWorld,
+    HelloWorld,
     Screenshot
   },
   data() {
     return {
-      isScreenshot: 'screenshot',
+      isScreenshot: "screenshot",
       screenshotStyles: {
         zIndex: 9999
       }
-    }
+    };
   },
   methods: {
     doScreenshot() {
-      this.isScreenshot = this.isScreenshot?'':'screenshot';
+      this.isScreenshot = this.isScreenshot ? "" : "screenshot";
     }
   }
-}
+};
 </script>
 
 <style>
+* {
+  margin: 0;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+}
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  width: 100%;
+  height: 100%;
 }
 #app .logo {
   transform: translate3d(20px, 20px, 0);

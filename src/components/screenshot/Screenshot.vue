@@ -1,394 +1,274 @@
 <template>
-  <div class="tools-box">
-    <!-- <div v-show="currentOperatorType" :style="{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0,zIndex: zIndex }" class="screenshotLayout"></div> -->
-    <!-- 截图动态面板入口 -->
-    <div ref="circleBtn" :class="circleBtnCls()" :style="circleBtnStyles()" class="circle-btn" @click="circleBtnSwitchHandler">
-      <!-- 截图工具 -->
-      <div v-show="showOperatorTools" class="tools">
-        <div :class="toolsCommentsBtnCls()" title="批注" class="comments" @click="switchOperatorType(operatorType.BRUSH)">
-          <i class="fa fa-pencil" aria-hidden="true"></i>
-        </div>
-        <div :class="toolsEraserBtnCls()" class="rubber-wipe" @click="switchOperatorType(operatorType.ERASER)">
-          <i class="fa fa-eraser fa-6" aria-hidden="true"></i>
-        </div>
-        <div :class="toolsClipBtnCls()" class="screenshots" @click="switchOperatorType(operatorType.CLIP)">
-          <i class="fa fa-scissors" aria-hidden="true"></i>
-        </div>
+  <div :style="{'z-index': zIndex}" class="tools-manipulation-box">
+    <!-- 豪华版批注截图 -->
+    <div class="tools-manipulation">
+      <div :class="['manipulation-btn', { 'active': currentOperatorType }]" @click="start"></div>
+      <div
+        :style="{display: currentOperatorType ? 'block' : null, zIndex: zIndex}"
+        :class="['manipulation-list']"
+      >
+        <ul>
+          <li class="manipulation-basis">
+            <div
+              :class="['manipulation-brush', 'basis-item', {'basis-item-active': currentOperatorType === operatorType.BRUSH}]"
+              title="画笔"
+              @click="switchOperator(operatorType.BRUSH)"
+            >
+              <font-awesome-icon icon="pen"/>
+            </div>
+            <div
+              :class="['manipulation-rubber-wipe', 'basis-item', {'basis-item-active': currentOperatorType === operatorType.PALETTE}]"
+              title="颜色"
+              @click="switchOperator(operatorType.PALETTE)"
+            >
+              <font-awesome-icon icon="palette"/>
+            </div>
+            <div
+              :class="['manipulation-mosaic', 'basis-item', {'basis-item-active': currentOperatorType === operatorType.ERASER}]"
+              title="橡皮擦"
+              @click="switchOperator(operatorType.ERASER)"
+            >
+              <font-awesome-icon icon="eraser"/>
+            </div>
+            <div
+              :class="['manipulation-redo', 'basis-item', {'basis-item-active': currentOperatorType === operatorType.MOSAIC}]"
+              title="马赛克"
+              @click="switchOperator(operatorType.MOSAIC)"
+            >
+              <font-awesome-icon icon="chess-board"/>
+            </div>
+            <div class="manipulation-repeat basis-item" title="撤销" @click="undo">
+              <font-awesome-icon icon="undo"/>
+            </div>
+            <div class="manipulation-repeat basis-item" title="重复" @click="repeat">
+              <font-awesome-icon icon="reply"/>
+            </div>
+          </li>
+          <li class="manipulation-screenshot-sharing" title="裁剪">
+            <font-awesome-icon icon="cut"/>
+          </li>
+          <li class="manipulation-shut-down" title="取消" @click="terminal">
+            <font-awesome-icon icon="ban"/>
+          </li>
+        </ul>
       </div>
     </div>
-    <!-- <font-awesome-icon icon="coffee" /> -->
-    <dir ref="canvasPad" :is="canvasComponent" :brush-type="currentOperatorType" :background="background" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%"></dir>
-    <div :is="clipperComponent" :style="clipperComponentStyles()" @do-screenshot="afterScreenshot"></div>
-    <drawing-tool></drawing-tool>
   </div>
 </template>
 
 <script>
-import html2canvas from 'html2canvas'
-import Canvas from './Canvas'
-import Clipper from './Clipper'
-import DrawingTool from './DrawingTool'
+import html2canvas from "html2canvas";
+import CanvasHelper from "@/components/screenshot/CanvasHelper";
 
 export default {
-  components: {
-    CanvasPad: Canvas,
-    Clipper,
-    DrawingTool
-  },
-  props: {
-    zIndex: {
-      type: Number,
-      required: false,
-      default: 2399 // 因为aurora弹窗提示的z-index是2400
-    }
-  },
   data() {
-    let circleBtnPos =
-      JSON.parse(window.localStorage.getItem('circleBtnPos')) || {}
     return {
-      showOperatorTools: false,
+      zIndex: 2,
+      snapshot: null,
       currentOperatorType: null,
       operatorType: {
-        BRUSH: 'brush',
-        ERASER: 'eraser',
-        CLIP: 'clip'
+        BRUSH: "brush",
+        PALETTE: "palette",
+        ERASER: "eraser",
+        MOSAIC: "mosaic",
+        CLIP: "clip"
       },
-      circleBtnPos: {
-        top: circleBtnPos.top || 200,
-        right: circleBtnPos.right || 40
-      },
-      canvasComponent: null,
-      clipperComponent: null,
-      clipperZIndex: this.zIndex - 1,
-      sendMailComponent: null,
-      background: null,
-      screenshotBase64Img: null,
-      sendMailZIndex: this.zIndex - 1
-    }
-  },
-  mounted() {
-    this.init()
-  },
-  destroyed() {
-    this.destoryScreenshot()
+      canvasHelper: null
+    };
   },
   methods: {
-    init() {
-      this.renderScreenshot()
-    },
-    renderScreenshot() {
-      let circleBtn = this.$refs.circleBtn
-      circleBtn.addEventListener('mousedown', this.screenshotBtnMoveStart)
-      circleBtn.addEventListener('mousemove', this.screenshotBtnMove)
-      circleBtn.addEventListener('mouseup', this.screenshotBtnMoveEnd)
-      circleBtn.addEventListener('touchstart', this.screenshotBtnMoveStart)
-      circleBtn.addEventListener('touchmove', this.screenshotBtnMove)
-      circleBtn.addEventListener('touchend', this.screenshotBtnMoveEnd)
-    },
     /**
-     * @description 销毁截图批注和插件、发送邮件的组件，并启用卡片容器部分的交互事件
+     * @description 截图
+     * @param {HTMLElement} 截图区域的HTMLElement
+     * @param {Object} html2cavas配置
+     * @param {Function} 截图成功的回调函数
      */
-    destoryScreenshot() {
-      this.currentOperatorType = null
-      this.canvasComponent = null
-      this.clipperComponent = null
-      this.sendMailComponent = null
-      // this.switchScreenPointerEvent(true)
+    doScreenshot(element, options, callback) {
+      let defaultOptions = {
+        ignoreElements: element => {
+          return element.className === "tools-manipulation-box";
+        },
+        logging: false
+      };
+      options = { ...defaultOptions, ...options };
+      html2canvas(element, options).then(callback);
     },
-    /**
-     * 截图批注组件销毁前的事件
-     */
-    beforeDestroy() {
-      let circleBtn = this.$refs.circleBtn
-      circleBtn.removeEventListener('mousedown', this.screenshotBtnMoveStart)
-      circleBtn.removeEventListener('mousemove', this.screenshotBtnMove)
-      circleBtn.removeEventListener('mouseup', this.screenshotBtnMoveEnd)
-      circleBtn.removeEventListener('touchstart', this.screenshotBtnMoveStart)
-      circleBtn.removeEventListener('touchmove', this.screenshotBtnMove)
-      circleBtn.removeEventListener('touchend', this.screenshotBtnMoveEnd)
-    },
-    circleBtnSwitchHandler() {
-      this.showOperatorTools = !this.showOperatorTools
-      if (!this.showOperatorTools) {
-        this.destoryScreenshot()
+    initCanvas(canvas) {
+      let snapshot = document.querySelector("#snapshot");
+      if (snapshot) {
+        document.body.removeChild(snapshot);
       }
+      canvas.id = "snapshot";
+      canvas.style.position = "absolute";
+      canvas.style.top = 0;
+      canvas.style.left = 0;
+      canvas.width = document.body.clientWidth;
+      canvas.height = document.body.clientHeight;
+      document.body.appendChild(canvas);
+      this.canvasHelper = new CanvasHelper({
+        id: "snapshot",
+        width: canvas.width,
+        height: canvas.height
+      });
+      this.canvasHelper.init();
     },
-    circleBtnCls: function() {
-      return [{ 'circle-btn-active': this.showOperatorTools }]
+    generateSnapshot() {
+      this.doScreenshot(document.body, {}, canvas => {
+        this.initCanvas(canvas);
+      });
     },
-    circleBtnStyles() {
-      return {
-        top: this.circleBtnPos.top + 'px',
-        right: this.circleBtnPos.right + 'px',
-        zIndex: this.zIndex
-      }
+    start() {
+      this.currentOperatorType = this.operatorType.BRUSH;
+      this.generateSnapshot();
     },
-    toolsCommentsBtnCls: function() {
-      return [
-        {
-          'tools-active': this.currentOperatorType === this.operatorType.BRUSH
-        }
-      ]
+    switchOperator(operatorType) {
+      this.currentOperatorType = operatorType;
     },
-    toolsEraserBtnCls: function() {
-      return [
-        {
-          'tools-active': this.currentOperatorType === this.operatorType.ERASER
-        }
-      ]
+    undo() {
+      this.canvasHelper.undo();
     },
-    toolsClipBtnCls: function() {
-      return [
-        {
-          'tools-active': this.currentOperatorType === this.operatorType.CLIP
-        }
-      ]
+    repeat() {
+      this.canvasHelper.repeat();
     },
-    /**
-     * @description 截屏按钮拖动事件，用于mousestart/touchstart/pointerdown
-     */
-    screenshotBtnMoveStart() {
-      // event.buttons相关文档 https://developer.mozilla.org/zh-CN/docs/Web/API/MouseEvent/buttons
-      if (event.type === 'mousedown' && event.buttons === 1) {
-        const { pageX, pageY } = event
-        this.previousX = pageX
-        this.previousY = pageY
-      }
-      if (event.type === 'touchstart' && event.changedTouches.length > 0) {
-        const { pageX, pageY, identifier } = event.changedTouches[0]
-        this.previousX = pageX
-        this.previousY = pageY
-        this.touchIdentifier = identifier
-      }
-      event.stopPropagation()
-    },
-    /**
-     * @description 截屏按钮拖动事件，用于mousemove/touchmove/pointermove
-     */
-    screenshotBtnMove() {
-      if (event.type === 'mousemove' && event.buttons === 1) {
-        const { pageX, pageY } = event
-        let moveX = pageX - this.previousX
-        let moveY = pageY - this.previousY
-        this.circleBtnPos.top = this.circleBtnPos.top + moveY
-        this.circleBtnPos.right = this.circleBtnPos.right - moveX
-        this.previousX = pageX
-        this.previousY = pageY
-      }
-      if (event.type === 'touchmove' && event.changedTouches.length > 0) {
-        const { pageX, pageY, identifier } = event.changedTouches[0]
-        if (identifier !== this.touchIdentifier) return
-        let moveX = pageX - this.previousX
-        let moveY = pageY - this.previousY
-        this.circleBtnPos.top = this.circleBtnPos.top + moveY
-        this.circleBtnPos.right = this.circleBtnPos.right - moveX
-        this.previousX = pageX
-        this.previousY = pageY
-      }
-      event.stopPropagation()
-    },
-    /**
-     * @description 截屏按钮拖动事件，用于mouseup/touchend/pointerup
-     */
-    screenshotBtnMoveEnd() {
-      if (event.type === 'mouseup') {
-        if (this.circleBtnPos.right > 40) {
-          this.circleBtnPos.right = 40
-        }
-        if (this.circleBtnPos.top < 0) {
-          this.circleBtnPos.top = 200
-        }
-        if (this.circleBtnPos.right < 40) {
-          this.circleBtnPos.right = 40
-        }
-        if (this.circleBtnPos.top > window.screen.availHeight) {
-          this.circleBtnPos.top = 200
-        }
-        window.localStorage.setItem(
-          'circleBtnPos',
-          JSON.stringify({
-            top: this.circleBtnPos.top,
-            right: this.circleBtnPos.right
-          })
-        )
-      }
-      if (event.type === 'touchend' && event.changedTouches.length > 0) {
-        if (this.circleBtnPos.right > 40) {
-          this.circleBtnPos.right = 40
-        }
-        if (this.circleBtnPos.top < 0) {
-          this.circleBtnPos.top = 200
-        }
-        if (this.circleBtnPos.right < 40) {
-          this.circleBtnPos.right = 40
-        }
-        if (this.circleBtnPos.top > window.screen.availHeight) {
-          this.circleBtnPos.top = 200
-        }
-        window.localStorage.setItem(
-          'circleBtnPos',
-          JSON.stringify({
-            top: this.circleBtnPos.top,
-            right: this.circleBtnPos.right
-          })
-        )
-      }
-      event.stopPropagation()
-    },
-    switchOperatorType(operatorType) {
-      if (!operatorType) {
-        this.destoryScreenshot()
-        return
-      }
-      // this.switchScreenPointerEvent(false)
-      this.currentOperatorType = operatorType
-      if (this.currentOperatorType === this.operatorType.BRUSH) {
-        this.doBrush()
-      }
-      if (this.currentOperatorType === this.operatorType.ERASER) {
-        this.doBrush()
-      }
-      if (this.currentOperatorType === this.operatorType.CLIP) {
-        this.doClip()
-      } else {
-        if (this.clipperComponent) this.clipperComponent = null
-      }
-      event.stopPropagation()
-    },
-    switchScreenPointerEvent(bool) {
-      let screenOperaterArea = document.querySelector('.screen-preview')
-      if (bool === undefined || bool === null) {
-        screenOperaterArea.style.pointerEvents =
-          screenOperaterArea.style.pointerEvents === 'none' ? '' : 'none'
-      } else {
-        screenOperaterArea.style.pointerEvents = bool ? '' : 'none'
-      }
-    },
-    doBrush() {
-      if (this.canvasComponent === null) {
-        let { availWidth: width, availHeight: height } = window.screen
-        let html2canvasOptions = { x: 0, y: 0, width, height }
-        let html2canvasEl = document.querySelector('body')
-        this.doScreenshot(html2canvasEl, html2canvasOptions, canvas => {
-          this.background = canvas
-          this.canvasComponent = 'canvas-pad'
-        })
-      } else {
-        let canvasPad = this.$refs.canvasPad
-        if (this.currentOperatorType === this.operatorType.ERASER) {
-          // canvasPad.setEraserSize(20)
-          // canvasPad.setStrokeStyle('rgba(255,255,0,255)')
-          canvasPad.setBrushType(this.operatorType.ERASER)
-        } else {
-          canvasPad.setBrushType(this.operatorType.BRUSH)
-          // canvasPad.setLineWidth(5)
-          // canvasPad.setStrokeStyle('rgba(255, 0, 0, 255)')
-        }
-      }
-    },
-    doClip() {
-      this.clipperComponent = 'clipper'
-      // this.initClipper()
-    },
-    clipperComponentStyles() {
-      return {
-        zIndex: this.clipperZIndex,
-        top: 0,
-        left: 0,
-        position: 'absolute',
-        width: '100%',
-        height: '100%'
-      }
-    },
-    afterScreenshot(clipperPosition) {
-      let { x, y, width, height } = clipperPosition
-      let html2canvasOptions = { x, y, width, height }
-      let html2canvasEl = document.querySelector('body')
-      this.doScreenshot(html2canvasEl, html2canvasOptions, canvas => {
-        this.screenshotBase64Img = canvas.toDataURL()
-        alert(this.screenshotBase64Img)
-      })
-    },
-    doScreenshot(html2canvasEl, html2canvasOptions, screenShotCallback) {
-      html2canvas(html2canvasEl, html2canvasOptions).then(screenShotCallback)
+    terminal() {
+      this.currentOperatorType = null;
+      this.canvasHelper.destory();
+      this.snapshot = null;
     }
   }
 }
 </script>
 
-<style lang="less" scope>
-.circle-btn {
-  position: absolute;
-  width: 32px;
-  height: 32px;
-  display: block;
-  top: 100px;
-  right: 20px;
-  background: #516c96;
-  border-radius: 4px;
-  opacity: 0.4;
-  transition: all 0.5s ease;
-  cursor: pointer;
-  &:before {
-    content: '';
-    width: 48px;
-    height: 48px;
+<style lang="less" scoped>
+.tools-manipulation-box {
+  .snapshot {
+    width: 100%;
+    height: 100%;
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    display: block;
-    border-radius: 100%;
-    background: #6585b6;
+    top: 0;
+    left: 0;
   }
-  &:after {
-    content: '';
-    width: 34px;
-    height: 34px;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    display: block;
-    border-radius: 100%;
-    background: #7c9dd1;
-    box-shadow: 0 0 10px 0 #19437d, inset 0 0 4px 0 rgba(255, 255, 255, 0.84);
-  }
-  &:hover {
-    opacity: 0.8;
-  }
-}
-.circle-btn.circle-btn-active {
-  opacity: 0.8;
-}
-.tools-box {
-  .tools {
-    position: absolute;
-    top: 80px;
-    z-index: 999999999;
-    border: none;
-    padding: 0;
-    .comments,
-    .rubber-wipe,
-    .screenshots {
+  .tools-manipulation {
+    .manipulation-btn {
+      position: absolute;
       width: 64px;
       height: 64px;
+      display: block;
+      top: 100px;
+      right: 100px;
+      z-index: 999;
       background: #516c96;
       border-radius: 4px;
-      font-size: 30px;
-      color: #fff;
-      margin: 0 0 8px 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
+      opacity: 0.4;
+      transition: all 0.5s ease;
       cursor: pointer;
+      &:before {
+        content: "";
+        width: 48px;
+        height: 48px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        display: block;
+        border-radius: 100%;
+        background: #6585b6;
+      }
+      &:after {
+        content: "";
+        width: 34px;
+        height: 34px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        display: block;
+        border-radius: 100%;
+        background: #7c9dd1;
+        box-shadow: 0 0 10px 0 #19437d,
+          inset 0 0 4px 0 rgba(255, 255, 255, 0.84);
+      }
       &:hover {
-        background: #2566d2;
+        opacity: 0.8;
+      }
+      &:active {
+        opacity: 0.8;
       }
     }
-    .tools-active {
-      background: #2566d2;
+    .manipulation-btn.manipulation-active {
+      opacity: 0.8;
+    }
+    .manipulation-list {
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      bottom: 20%;
+      width: 480px;
+      height: 80px;
+      background-color: rgba(18, 24, 29, 1);
+      border-radius: 5px;
+      ul {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 10px;
+        li.manipulation-basis {
+          width: 264px;
+          height: 56px;
+          background: inherit;
+          background-color: rgba(37, 39, 44, 1);
+          border-radius: 5px;
+          font-weight: 400;
+          font-style: normal;
+          font-size: 16px;
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          .basis-item {
+            width: 40px;
+            height: 40px;
+            border: solid 1px #343d49;
+            background: #25272c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            &:hover {
+              width: 39px;
+              height: 39px;
+              border: solid 2px #058dcf;
+            }
+          }
+          .basis-item-active {
+            background: #058dcf;
+          }
+        }
+        li.manipulation-screenshot-sharing,
+        li.manipulation-shut-down {
+          width: 56px;
+          height: 56px;
+          background-color: rgba(37, 39, 44, 1);
+          border-radius: 5px;
+          font-weight: 400;
+          font-style: normal;
+          font-size: 16px;
+          color: #ffffff;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+          font-size: 30px;
+          cursor: pointer;
+          &:hover {
+            background: #058dcf;
+          }
+        }
+      }
     }
   }
 }

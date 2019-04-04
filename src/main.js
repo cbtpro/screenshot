@@ -1,17 +1,35 @@
 import Vue from 'vue'
 import App from './App.vue'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faCoffee } from '@fortawesome/free-solid-svg-icons'
+import {
+  faSpinner,
+  faPen,
+  faPalette,
+  faEraser,
+  faChessBoard,
+  faUndo,
+  faReply,
+  faCut,
+  faBan
+} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+const VConsole  = require('vconsole')
+new VConsole();
 
-library.add(faCoffee)
+library.add(faSpinner)
+library.add(faPen)
+library.add(faPalette)
+library.add(faEraser)
+library.add(faChessBoard)
+library.add(faUndo)
+library.add(faReply)
+library.add(faCut)
+library.add(faBan)
 
 Vue.component('font-awesome-icon', FontAwesomeIcon)
-// usage: <i class="fa fa-scissors" aria-hidden="true"></i>  or <font-awesome-icon icon="coffee" />
-
 
 Vue.config.productionTip = false
 
 new Vue({
-  render: h => h(App),
+  render: h => h(App)
 }).$mount('#app')
