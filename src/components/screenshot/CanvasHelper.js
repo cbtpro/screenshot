@@ -3,8 +3,8 @@
 class CanvasTools {
   constructor() {
 
-    this.mosaicSize = 9; //马赛克的大小
-
+    this.quan = 3; //马赛克的大小
+    this.num = 9; //一次操作包含马赛克的个数
     this.drawLine = this.drawLine.bind(this);
     this.drawMosaic = this.drawMosaic.bind(this);
   }
@@ -14,48 +14,64 @@ class CanvasTools {
     this.context.lineTo(to.x, to.y);
     this.context.stroke();
   }
-  updateSurroundPixel(x, y, imagePixelData, centerColors) {
-    let startx = x - this.mosaicSize
-    startx = startx < 0 ? 0 : startx
-    let endx = x + this.mosaicSize
-    let starty = y - this.mosaicSize
-    starty = starty < 0 ? 0 : starty
-    let endy = y + this.mosaicSize
+  // https://github.com/yomonah/mosaic-js
+  drawMosaic(position) {
+    let { x: dx, y: dy } = position
+    //原始图像
+    let originalImgData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    let originalPxData = originalImgData.data;
 
-    // let surroundPixels = [];
-    for (let i = startx; i < endx; i++) {
-      for (let j = starty; j < endy; j++) {
-        let pixelsIndex = (j * this.canvas.width + i) * 4;
-        // surroundPixels.push(pixelsIndex)
-        imagePixelData[pixelsIndex] = centerColors[0]
-        imagePixelData[pixelsIndex + 1] = centerColors[1]
-        imagePixelData[pixelsIndex + 2] = centerColors[2]
-        imagePixelData[pixelsIndex + 3] = centerColors[3]
+    //用于循环修改  
+    let modifyImgData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    let modifyPxData = modifyImgData.data;
+    for (let i = dx - this.quan * this.num; i < dx + this.quan * this.num; i = i + 2 * this.quan + 1) {
+      for (let j = dy - this.quan * this.num; j < dy + this.quan * this.num; j = j + 2 * this.quan + 1) {
+        //中心点(dx,dy)
+        // if(Math.pow(i-dx,2)+Math.pow(j-dy,2) <= Math.pow(this.quan*this.num/2,2)){
+        if (!((i == dx - this.quan * this.num && j == dy - this.quan * this.num) || (i == dx - this.quan * this.num && j == dy - this.quan * this.num + 2 * this.quan + 1) ||
+            (i == dx - this.quan * this.num && j == dy - this.quan * this.num + 4 * this.quan + 2) || (i == dx - this.quan * this.num && j == dy - this.quan * this.num + 12 * this.quan + 6) ||
+            (i == dx - this.quan * this.num && j == dy - this.quan * this.num + 14 * this.quan + 7) || (i == dx - this.quan * this.num && j == dy - this.quan * this.num + 16 * this.quan + 8) ||
+            (i == dx - this.quan * this.num + 16 * this.quan + 8 && j == dy - this.quan * this.num) || (i == dx - this.quan * this.num + 16 * this.quan + 8 && j == dy - this.quan * this.num + 2 * this.quan + 1) ||
+            (i == dx - this.quan * this.num + 16 * this.quan + 8 && j == dy - this.quan * this.num + 4 * this.quan + 2) || (i == dx - this.quan * this.num + 16 * this.quan + 8 && j == dy - this.quan * this.num + 12 * this.quan + 6) ||
+            (i == dx - this.quan * this.num + 16 * this.quan + 8 && j == dy - this.quan * this.num + 14 * this.quan + 7) || (i == dx - this.quan * this.num + 16 * this.quan + 8 && j == dy - this.quan * this.num + 16 * this.quan + 8) ||
+            (i == dx - this.quan * this.num + 2 * this.quan + 1 && j == dy - this.quan * this.num) || (i == dx - this.quan * this.num + 4 * this.quan + 2 && j == dy - this.quan * this.num) ||
+            (i == dx - this.quan * this.num + 12 * this.quan + 6 && j == dy - this.quan * this.num) || (i == dx - this.quan * this.num + 14 * this.quan + 7 && j == dy - this.quan * this.num) ||
+            (i == dx - this.quan * this.num + 2 * this.quan + 1 && j == dy - this.quan * this.num + 16 * this.quan + 8) || (i == dx - this.quan * this.num + 4 * this.quan + 2 && j == dy - this.quan * this.num + 16 * this.quan + 8) ||
+            (i == dx - this.quan * this.num + 12 * this.quan + 6 && j == dy - this.quan * this.num + 16 * this.quan + 8) || (i == dx - this.quan * this.num + 14 * this.quan + 7 && j == dy - this.quan * this.num + 16 * this.quan + 8))) {
+          let sumR = 0;
+          let sumG = 0;
+          let sumB = 0;
+          //找他周围的元素 
+          for (let x = -this.quan; x <= this.quan; x++) {
+            for (let y = -this.quan; y <= this.quan; y++) {
+                let xx = i + x;
+                let yy = j + y;
+                let pp = yy * this.canvas.width + xx; //周围的元素。  
+                sumR += originalPxData[pp * 4 + 0];
+                sumG += originalPxData[pp * 4 + 1];
+                sumB += originalPxData[pp * 4 + 2];
+            }
+          }
+
+          let totlal = (2 * this.quan + 1) * (2 * this.quan + 1);
+          let avgR = sumR / totlal;
+          let avgG = sumG / totlal;
+          let avgB = sumB / totlal;
+
+          for (let x = -this.quan; x <= this.quan; x++) {
+            for (let y = -this.quan; y <= this.quan; y++) {
+                let xx = i + x;
+                let yy = j + y;
+                let pp = yy * this.canvas.width + xx; //周围的元素。  
+                modifyPxData[pp * 4 + 0] = avgR;
+                modifyPxData[pp * 4 + 1] = avgG;
+                modifyPxData[pp * 4 + 2] = avgB;
+            }
+          }
+        }
       }
     }
-    // return surroundPixels;
-  }
-  drawMosaic(to) {
-    let { x, y } = to
-    x = parseInt(x)
-    y = parseInt(y)
-    let originalImageData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
-    let originalImagePixelData = originalImageData.data;
-
-    let imageDataTemp = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
-    let imagePixelData = imageDataTemp.data;
-
-    let i = (y * this.canvas.width + x) * 4;
-    let centerR = originalImagePixelData[i]
-    let centerG = originalImagePixelData[i + 1]
-    let centerB = originalImagePixelData[i + 2]
-    let centerA = originalImagePixelData[i + 3]
-    let centerColor = `rgba( ${centerR}, ${centerG}, ${centerB}, ${centerA})`
-    // console.log(`centerA color %c${centerColor}`, `color:${centerColor}`)
-    //寻找周围的像素点，并将找到的像素点的颜色设置成中心点的颜色
-    this.updateSurroundPixel(x, y, imagePixelData, [centerR, centerG, centerB, centerA ])
-
-    this.context.putImageData(imageDataTemp, 0, 0, 0, 0, this.canvas.width, this.canvas.height);
+    this.context.putImageData(modifyImgData, 0, 0, 0, 0, this.canvas.width, this.canvas.height);
   }
 }
 class CanvasEvents extends CanvasTools {
@@ -69,9 +85,9 @@ class CanvasEvents extends CanvasTools {
   getGesturePointFromEvent(evt) {
     if (evt.targetTouches) {
       let [firstTouch] = evt.targetTouches;
-      return firstTouch ? { x: firstTouch.clientX, y: firstTouch.clientY } : {};
+      return firstTouch ? { x: parseInt(firstTouch.clientX), y: parseInt(firstTouch.clientY) } : {};
     } else {
-      return { x: evt.clientX, y: evt.clientY };
+      return { x: parseInt(evt.clientX), y: (evt.clientY) };
     }
   }
   handleGestureStart(evt) {
