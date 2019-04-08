@@ -124,12 +124,13 @@ class CanvasEvents extends CanvasTools {
   }
   handleGestureEnd(evt) {
     evt.preventDefault();
-    let position = this.getGesturePointFromEvent(evt);
+    this.snapshot()
+    // let position = this.getGesturePointFromEvent(evt);
     // console.log(`${evt.type} to x: ${position.x} y: ${position.y}`);
     if (evt.type === "pointerup") {
       this.canvas.onpointermove = null;
       this.canvas.onpointerup = null;
-      // this.canvas.onpointercancel = null;
+      this.canvas.onpointercancel = null;
     } else if (evt.type === "touchend") {
       this.canvas.ontouchmove = null;
       this.canvas.ontouchend = null;
@@ -165,10 +166,8 @@ export default class CanvasHelper extends CanvasEvents {
     this.brushType = brushType;
 
     this.history = [];
-    this.history.push(
-      this.context.getImageData(0, 0, this.canvas.width, this.canvas.height)
-    );
-    this.stepNumber = 1;
+    this.stepNumber = 0;
+    this.snapshot()
   }
 
   requiredConfig(param) {
@@ -186,14 +185,21 @@ export default class CanvasHelper extends CanvasEvents {
     this.context.strokeStyle = this.strokeStyle;
     this.context.lineWidth = this.lineWidth;
   }
+  snapshot() {
+    this.history.push(
+      this.context.getImageData(0, 0, this.canvas.width, this.canvas.height)
+    );
+    this.stepNumber++
+  }
   undo() {
-    if (this.history.length > 0) {
+    let current = this.stepNumber - 1
+    if (this.history.length > 0 && current >= 0) {
       this.context.putImageData(this.history[--this.stepNumber], 0, 0);
     }
   }
   repeat() {
     let current = this.stepNumber + 1;
-    if (current < this.history.length) {
+    if (this.history.length > 0 && current < this.history.length) {
       this.context.putImageData(this.history[++this.stepNumber], 0, 0);
     }
   }
