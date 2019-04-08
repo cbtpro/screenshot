@@ -105,9 +105,10 @@ export default {
       canvas.style.left = 0;
       canvas.width = document.body.clientWidth;
       canvas.height = document.body.clientHeight;
+      canvas.style.touchAction = 'none'
       let context = canvas.getContext('2d')
       let image = new Image()
-      image.onload = (a) => {
+      image.onload = () => {
         context.drawImage(image, 0, 0, canvas.width, canvas.height)
       }
       image.src = base64

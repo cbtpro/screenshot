@@ -1,13 +1,5 @@
 /* eslint-disable no-console */
 
-// function getTouch(touchEvent) {
-//   let touchs = touchEvent.targetTouches;
-//   let [touch] = touchs;
-//   if (!touch) {
-//     return { pageX: null, pageY: null };
-//   }
-//   return touch;
-// }
 class CanvasTools {
   constructor() {
     
@@ -45,97 +37,10 @@ class CanvasEvents extends CanvasTools {
   constructor() {
     super();
 
-    // this.pointerdown = this.pointerdown.bind(this);
-    // this.pointermove = this.pointermove.bind(this);
-    // this.pointerup = this.pointerup.bind(this);
-
-    // this.touchstart = this.touchstart.bind(this);
-    // this.touchmove = this.touchmove.bind(this);
-    // this.touchend = this.touchend.bind(this);
-
-    // this.mousedown = this.mousedown.bind(this);
-    // this.mousemove = this.mousemove.bind(this);
-    // this.mouseup = this.mouseup.bind(this);
-
     this.handleGestureStart = this.handleGestureStart.bind(this);
     this.handleGestureMove = this.handleGestureMove.bind(this);
     this.handleGestureEnd = this.handleGestureEnd.bind(this);
   }
-  // pointerdown(pointerEvent) {
-  //   pointerEvent.preventDefault();
-  //   let { pageX, pageY } = pointerEvent;
-  //   console.log(`pointerdown to x: ${pageX} y: ${pageY}`);
-  //   this.position = { x: pageX, y: pageY };
-  //   this.canvas.onpointermove = this.pointermove;
-  //   this.canvas.onpointerup = this.pointerup;
-  // }
-  // pointermove(pointerEvent) {
-  //   pointerEvent.preventDefault();
-  //   let { pageX, pageY } = pointerEvent;
-  //   console.log(`pointermove to x: ${pageX} y: ${pageY}`);
-  //   let position = { x: pageX, y: pageY };
-  //   this.drawLine(this.position, position);
-  //   this.position = position;
-  // }
-  // pointerup(pointerEvent) {
-  //   pointerEvent.preventDefault();
-  //   let { pageX, pageY } = pointerEvent;
-  //   console.log(`pointerup to x: ${pageX} y: ${pageY}`);
-  //   this.canvas.onpointermove = null;
-  //   this.canvas.onpointerup = null;
-  // }
-
-  // // 苹果设备只触发touch事件，安卓设备触发touch+pointer事件
-  // touchstart(touchEvent) {
-  //   touchEvent.preventDefault();
-  //   let touch = getTouch(touchEvent);
-  //   let { pageX, pageY } = touch;
-  //   console.log(`touchstart to x: ${pageX} y: ${pageY}`);
-  //   this.position = { x: pageX, y: pageY };
-  //   this.canvas.ontouchmove = this.touchmove;
-  //   this.canvas.ontouchend = this.touchend;
-  // }
-  // touchmove(touchEvent) {
-  //   touchEvent.preventDefault();
-  //   let touch = getTouch(touchEvent);
-  //   let { pageX, pageY } = touch;
-  //   console.log(`touchmove to x: ${pageX} y: ${pageY}`);
-  //   let position = { x: pageX, y: pageY };
-  //   this.drawLine(this.position, position);
-  //   this.position = position;
-  // }
-  // touchend(touchEvent) {
-  //   touchEvent.preventDefault();
-  //   let touch = getTouch(touchEvent);
-  //   let { pageX, pageY } = touch;
-  //   console.log(`touchend to x: ${pageX} y: ${pageY}`);
-  //   this.canvas.ontouchmove = null;
-  //   this.canvas.ontouchend = null;
-  // }
-
-  // mousedown(mouseEvent) {
-  //   mouseEvent.preventDefault();
-  //   let { pageX, pageY } = mouseEvent;
-  //   console.log(`mousedown to x: ${pageX} y: ${pageY}`);
-  //   this.position = { x: pageX, y: pageY };
-  //   this.canvas.onmousemove = this.mousemove;
-  //   this.canvas.onmouseup = this.mouseup;
-  // }
-  // mousemove(mouseEvent) {
-  //   mouseEvent.preventDefault();
-  //   let { pageX, pageY } = mouseEvent;
-  //   console.log(`mousemove to x: ${pageX} y: ${pageY}`);
-  //   let position = { x: pageX, y: pageY };
-  //   this.drawLine(this.position, position);
-  //   this.position = position;
-  // }
-  // mouseup(mouseEvent) {
-  //   mouseEvent.preventDefault();
-  //   let { pageX, pageY } = mouseEvent;
-  //   console.log(`mouseup to x: ${pageX} y: ${pageY}`);
-  //   this.canvas.onmousemove = null;
-  //   this.canvas.onmouseup = null;
-  // }
   getGesturePointFromEvent(evt) {
     if (evt.targetTouches) {
       let [firstTouch] = evt.targetTouches;
@@ -153,12 +58,11 @@ class CanvasEvents extends CanvasTools {
     console.log(
       `${evt.type} to x: ${this.initialPosition.x} y: ${this.initialPosition.y}`
     );
-    // if (evt.type === "pointerdown") {
-    //   this.canvas.onpointermove = this.handleGestureMove;
-    //   this.canvas.onpointerup = this.handleGestureEnd;
-    //   this.canvas.onpointercancel = this.handleGestureEnd;
-    // } else 
-    if (evt.type === "touchstart") {
+    if (evt.type === "pointerdown") {
+      this.canvas.onpointermove = this.handleGestureMove;
+      this.canvas.onpointerup = this.handleGestureEnd;
+      this.canvas.onpointercancel = this.handleGestureEnd;
+    } else if (evt.type === "touchstart") {
       this.canvas.ontouchmove = this.handleGestureMove;
       this.canvas.ontouchend = this.handleGestureEnd;
       this.canvas.ontouchcancel = this.handleGestureEnd;
@@ -183,12 +87,11 @@ class CanvasEvents extends CanvasTools {
     evt.preventDefault();
     let position = this.getGesturePointFromEvent(evt);
     console.log(`${evt.type} to x: ${position.x} y: ${position.y}`);
-    // if (evt.type === "pointerup") {
-    //   this.canvas.onpointermove = null;
-    //   this.canvas.onpointerup = null;
-    //   // this.canvas.onpointercancel = null;
-    // } else
-    if (evt.type === "touchend") {
+    if (evt.type === "pointerup") {
+      this.canvas.onpointermove = null;
+      this.canvas.onpointerup = null;
+      // this.canvas.onpointercancel = null;
+    } else if (evt.type === "touchend") {
       this.canvas.ontouchmove = null;
       this.canvas.ontouchend = null;
       this.canvas.ontouchcancel = null;
@@ -256,18 +159,18 @@ export default class CanvasHelper extends CanvasEvents {
     }
   }
   init() {
-    // this.canvas.onpointerdown = this.pointerdown;
-    // this.canvas.ontouchstart = this.touchstart;
-    // this.canvas.onmousedown = this.mousedown;
-
-    // this.canvas.onpointerdown = this.handleGestureStart;
-    this.canvas.ontouchstart = this.handleGestureStart;
-    this.canvas.onmousedown = this.handleGestureStart;
+    if (window.PointerEvent) {
+      this.canvas.onpointerdown = this.handleGestureStart;
+    } else if (window.TouchEvent) {
+      this.canvas.ontouchstart = this.handleGestureStart;
+    } else {
+      this.canvas.onmousedown = this.handleGestureStart;
+    }
     
     // 禁用safari的touchstart事件
-    if(/iP(hone|ad)/.test(window.navigator.userAgent)) {
-      document.body.addEventListener('touchstart', function() {}, false);
-    }
+    // if(/iP(hone|ad)/.test(window.navigator.userAgent)) {
+    //   document.body.addEventListener('touchstart', function() {}, false);
+    // }
   }
   destory() {
     if (this.canvas) {
