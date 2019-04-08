@@ -10,7 +10,11 @@
 // }
 class CanvasTools {
   constructor() {
+    
+    this.mosaicSize = 9; //马赛克的大小
+
     this.drawLine = this.drawLine.bind(this);
+    this.drawMosaic = this.drawMosaic.bind(this);
   }
   drawLine(from, to) {
     this.context.beginPath();
@@ -18,10 +22,29 @@ class CanvasTools {
     this.context.lineTo(to.x, to.y);
     this.context.stroke();
   }
+  drawMosaic(to) {
+    let { x, y } = to
+    let originalImageData = this.context.getImageData(0,0,this.canvas.width,this.canvas.height);  
+    let originalImagePixelData = originalImageData.data; 
+
+    let imageDataTemp = this.context.getImageData(0,0,this.canvas.width,this.canvas.height);
+    let imagePixelData = imageDataTemp.data;
+
+    var i = (y * this.canvas.width + x) * 4;
+    let centerR = originalImagePixelData[i]
+    let centerG = originalImagePixelData[i + 1]
+    let centerB = originalImagePixelData[i + 2]
+    let centerA = originalImagePixelData[i + 3]
+    let centerColor = `rgba( ${centerR}, ${centerG}, ${centerB}, ${centerA})`
+    console.log(`centerA color %c${centerColor}`, `color:${centerColor}`)
+
+    // this.context.putImageData(modifyImgData,0,0,0,0,canvas.width,canvas.height);
+  }
 }
 class CanvasEvents extends CanvasTools {
   constructor() {
     super();
+
     // this.pointerdown = this.pointerdown.bind(this);
     // this.pointermove = this.pointermove.bind(this);
     // this.pointerup = this.pointerup.bind(this);
@@ -148,7 +171,11 @@ class CanvasEvents extends CanvasTools {
   handleGestureMove(evt) {
     evt.preventDefault();
     let position = this.getGesturePointFromEvent(evt);
-    this.drawLine(this.initialPosition, position);
+    if (this.brushType === 'brush') {
+      this.drawLine(this.initialPosition, position);
+    } else if (this.brushType === 'mosaic') {
+      this.drawMosaic(position)
+    }
     console.log(`${evt.type} to x: ${position.x} y: ${position.y}`);
     this.initialPosition = position;
   }
@@ -156,11 +183,12 @@ class CanvasEvents extends CanvasTools {
     evt.preventDefault();
     let position = this.getGesturePointFromEvent(evt);
     console.log(`${evt.type} to x: ${position.x} y: ${position.y}`);
-    if (evt.type === "pointerup") {
-      this.canvas.onpointermove = null;
-      this.canvas.onpointerup = null;
-      // this.canvas.onpointercancel = null;
-    } else if (evt.type === "touchend") {
+    // if (evt.type === "pointerup") {
+    //   this.canvas.onpointermove = null;
+    //   this.canvas.onpointerup = null;
+    //   // this.canvas.onpointercancel = null;
+    // } else
+    if (evt.type === "touchend") {
       this.canvas.ontouchmove = null;
       this.canvas.ontouchend = null;
       this.canvas.ontouchcancel = null;
@@ -194,9 +222,6 @@ export default class CanvasHelper extends CanvasEvents {
     this.strokeStyle = strokeStyle;
     this.brushType = brushType;
 
-    this.mosaicSize = 3; //马赛克的大小
-    this.mosaicCount = 9; //一次操作包含马赛克的个数
-
     this.history = [];
     this.history.push(
       this.context.getImageData(0, 0, this.canvas.width, this.canvas.height)
@@ -212,7 +237,9 @@ export default class CanvasHelper extends CanvasEvents {
     this.canvas.height = this.height;
     this.canvas.width = this.width;
   }
-
+  setBrushType(brushType) {
+    this.brushType = brushType
+  }
   initCanvas() {
     this.context.strokeStyle = this.strokeStyle;
     this.context.lineWidth = this.lineWidth;
