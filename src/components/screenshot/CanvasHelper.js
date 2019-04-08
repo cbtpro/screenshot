@@ -2,7 +2,7 @@
 
 class CanvasTools {
   constructor() {
-    
+
     this.mosaicSize = 9; //马赛克的大小
 
     this.drawLine = this.drawLine.bind(this);
@@ -14,23 +14,48 @@ class CanvasTools {
     this.context.lineTo(to.x, to.y);
     this.context.stroke();
   }
+  updateSurroundPixel(x, y, imagePixelData, centerColors) {
+    let startx = x - this.mosaicSize
+    startx = startx < 0 ? 0 : startx
+    let endx = x + this.mosaicSize
+    let starty = y - this.mosaicSize
+    starty = starty < 0 ? 0 : starty
+    let endy = y + this.mosaicSize
+
+    // let surroundPixels = [];
+    for (let i = startx; i < endx; i++) {
+      for (let j = starty; j < endy; j++) {
+        let pixelsIndex = (j * this.canvas.width + i) * 4;
+        // surroundPixels.push(pixelsIndex)
+        imagePixelData[pixelsIndex] = centerColors[0]
+        imagePixelData[pixelsIndex + 1] = centerColors[1]
+        imagePixelData[pixelsIndex + 2] = centerColors[2]
+        imagePixelData[pixelsIndex + 3] = centerColors[3]
+      }
+    }
+    // return surroundPixels;
+  }
   drawMosaic(to) {
     let { x, y } = to
-    let originalImageData = this.context.getImageData(0,0,this.canvas.width,this.canvas.height);  
-    let originalImagePixelData = originalImageData.data; 
+    x = parseInt(x)
+    y = parseInt(y)
+    let originalImageData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    let originalImagePixelData = originalImageData.data;
 
-    let imageDataTemp = this.context.getImageData(0,0,this.canvas.width,this.canvas.height);
+    let imageDataTemp = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
     let imagePixelData = imageDataTemp.data;
 
-    var i = (y * this.canvas.width + x) * 4;
+    let i = (y * this.canvas.width + x) * 4;
     let centerR = originalImagePixelData[i]
     let centerG = originalImagePixelData[i + 1]
     let centerB = originalImagePixelData[i + 2]
     let centerA = originalImagePixelData[i + 3]
     let centerColor = `rgba( ${centerR}, ${centerG}, ${centerB}, ${centerA})`
-    console.log(`centerA color %c${centerColor}`, `color:${centerColor}`)
+    // console.log(`centerA color %c${centerColor}`, `color:${centerColor}`)
+    //寻找周围的像素点，并将找到的像素点的颜色设置成中心点的颜色
+    this.updateSurroundPixel(x, y, imagePixelData, [centerR, centerG, centerB, centerA ])
 
-    // this.context.putImageData(modifyImgData,0,0,0,0,canvas.width,canvas.height);
+    this.context.putImageData(imageDataTemp, 0, 0, 0, 0, this.canvas.width, this.canvas.height);
   }
 }
 class CanvasEvents extends CanvasTools {
@@ -55,9 +80,7 @@ class CanvasEvents extends CanvasTools {
     }
     evt.preventDefault();
     this.initialPosition = this.getGesturePointFromEvent(evt);
-    console.log(
-      `${evt.type} to x: ${this.initialPosition.x} y: ${this.initialPosition.y}`
-    );
+    // console.log(`${evt.type} to x: ${this.initialPosition.x} y: ${this.initialPosition.y}`);
     if (evt.type === "pointerdown") {
       this.canvas.onpointermove = this.handleGestureMove;
       this.canvas.onpointerup = this.handleGestureEnd;
@@ -80,13 +103,13 @@ class CanvasEvents extends CanvasTools {
     } else if (this.brushType === 'mosaic') {
       this.drawMosaic(position)
     }
-    console.log(`${evt.type} to x: ${position.x} y: ${position.y}`);
+    // console.log(`${evt.type} to x: ${position.x} y: ${position.y}`);
     this.initialPosition = position;
   }
   handleGestureEnd(evt) {
     evt.preventDefault();
     let position = this.getGesturePointFromEvent(evt);
-    console.log(`${evt.type} to x: ${position.x} y: ${position.y}`);
+    // console.log(`${evt.type} to x: ${position.x} y: ${position.y}`);
     if (evt.type === "pointerup") {
       this.canvas.onpointermove = null;
       this.canvas.onpointerup = null;
@@ -166,7 +189,7 @@ export default class CanvasHelper extends CanvasEvents {
     } else {
       this.canvas.onmousedown = this.handleGestureStart;
     }
-    
+
     // 禁用safari的touchstart事件
     // if(/iP(hone|ad)/.test(window.navigator.userAgent)) {
     //   document.body.addEventListener('touchstart', function() {}, false);
