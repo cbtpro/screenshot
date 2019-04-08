@@ -93,17 +93,25 @@ export default {
       options = { ...defaultOptions, ...options };
       html2canvas(element, options).then(callback);
     },
-    initCanvas(canvas) {
+    initCanvas(base64) {
       let snapshot = document.querySelector("#snapshot");
       if (snapshot) {
         document.body.removeChild(snapshot);
       }
+      let canvas = document.createElement('canvas')
       canvas.id = "snapshot";
       canvas.style.position = "absolute";
       canvas.style.top = 0;
       canvas.style.left = 0;
       canvas.width = document.body.clientWidth;
       canvas.height = document.body.clientHeight;
+      canvas.style.touchAction = 'none'
+      let context = canvas.getContext('2d')
+      let image = new Image()
+      image.onload = () => {
+        context.drawImage(image, 0, 0, canvas.width, canvas.height)
+      }
+      image.src = base64
       document.body.appendChild(canvas);
       this.canvasHelper = new CanvasHelper({
         id: "snapshot",
@@ -114,7 +122,7 @@ export default {
     },
     generateSnapshot() {
       this.doScreenshot(document.body, {}, canvas => {
-        this.initCanvas(canvas);
+        this.initCanvas(canvas.toDataURL());
       });
     },
     start() {
@@ -123,6 +131,7 @@ export default {
     },
     switchOperator(operatorType) {
       this.currentOperatorType = operatorType;
+      this.canvasHelper.setBrushType(operatorType)
     },
     undo() {
       this.canvasHelper.undo();
