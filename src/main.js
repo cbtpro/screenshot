@@ -13,6 +13,8 @@ import {
   faBan
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import VConsole from 'vconsole'
+new VConsole()
 
 library.add(faSpinner)
 library.add(faPen)
