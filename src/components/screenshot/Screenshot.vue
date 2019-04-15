@@ -76,7 +76,27 @@ export default {
       canvasHelper: null
     };
   },
+  mounted() {
+    this.initShortcuts()
+  },
+  beforeDestroy() {
+    this.unShortcuts()
+  },
   methods: {
+    shortcuts(evt) {
+      if (evt.ctrlKey && evt.altKey && evt.key === 'a') {
+        this.start()
+      }
+      if (evt.key === 'Escape') {
+        this.terminal()
+      }
+    },
+    initShortcuts() {
+      document.addEventListener('keydown', this.shortcuts)
+    },
+    unShortcuts() {
+      document.removeEventListener('keydown', this.shortcuts)
+    },
     /**
      * @description 截图
      * @param {HTMLElement} 截图区域的HTMLElement
@@ -126,6 +146,9 @@ export default {
       });
     },
     start() {
+      if (this.canvasHelper instanceof Object) {
+        return
+      }
       this.currentOperatorType = this.operatorType.BRUSH;
       this.generateSnapshot();
     },
@@ -141,7 +164,8 @@ export default {
     },
     terminal() {
       this.currentOperatorType = null;
-      this.canvasHelper.destory();
+      this.canvasHelper && this.canvasHelper.destory();
+      this.canvasHelper = null
       this.snapshot = null;
     }
   }
