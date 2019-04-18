@@ -151,6 +151,7 @@ export default {
       }
       this.currentOperatorType = this.operatorType.BRUSH;
       this.generateSnapshot();
+      window.warnInfo('支持快捷键Esc退出截图');
     },
     switchOperator(operatorType) {
       this.currentOperatorType = operatorType;
