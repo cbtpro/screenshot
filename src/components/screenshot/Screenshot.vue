@@ -1,6 +1,5 @@
 <template>
-  <div :style="{'z-index': zIndex}" class="tools-manipulation-box">
-    <!-- 豪华版批注截图 -->
+  <div :style="[{'z-index': zIndex}, css]" class="screenshot-tools-box">
     <div class="tools-manipulation">
       <div :class="['manipulation-btn', { 'active': currentOperatorType }]" @click="start"></div>
       <div
@@ -40,7 +39,7 @@
             <div class="manipulation-repeat basis-item" title="撤销" @click="undo">
               <font-awesome-icon icon="undo"/>
             </div>
-            <div class="manipulation-repeat basis-item" title="重复" @click="repeat">
+            <div class="manipulation-repeat basis-item" title="重复" @click="restore">
               <font-awesome-icon icon="reply"/>
             </div>
           </li>
@@ -59,8 +58,18 @@
 <script>
 import html2canvas from "html2canvas";
 import CanvasHelper from "@/components/screenshot/CanvasHelper";
+import utils from './utils'
 
 export default {
+  props: {
+    css: {
+      required: false,
+      type: Object,
+      default: () => {
+        return {}
+      }
+    }
+  },
   data() {
     return {
       zIndex: 2,
@@ -77,12 +86,21 @@ export default {
     };
   },
   mounted() {
-    this.initShortcuts()
+    this.initShortcuts();
+    this.initScrollEvent();
   },
   beforeDestroy() {
     this.unShortcuts()
   },
   methods: {
+    onscroll() {
+    },
+    initScrollEvent() {
+      window.onscroll = utils.debounce(this.onscroll, 500);
+    },
+    /**
+     * @description 键盘快捷方式
+     */
     shortcuts(evt) {
       if (evt.ctrlKey && evt.altKey && evt.key === 'a') {
         this.start()
@@ -106,7 +124,7 @@ export default {
     doScreenshot(element, options, callback) {
       let defaultOptions = {
         ignoreElements: element => {
-          return element.className === "tools-manipulation-box";
+          return element.className === "screenshot-tools-box" || element.className === 'msg';
         },
         logging: false
       };
@@ -123,8 +141,9 @@ export default {
       canvas.style.position = "absolute";
       canvas.style.top = 0;
       canvas.style.left = 0;
-      canvas.width = document.body.clientWidth;
-      canvas.height = document.body.clientHeight;
+      let pageSize = utils.getPageSize();
+      canvas.width = pageSize.width;
+      canvas.height = pageSize.height;
       canvas.style.touchAction = 'none'
       let context = canvas.getContext('2d')
       let image = new Image()
@@ -160,8 +179,8 @@ export default {
     undo() {
       this.canvasHelper.undo();
     },
-    repeat() {
-      this.canvasHelper.repeat();
+    restore() {
+      this.canvasHelper.restore();
     },
     terminal() {
       this.currentOperatorType = null;
@@ -174,7 +193,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.tools-manipulation-box {
+.screenshot-tools-box {
   .snapshot {
     width: 100%;
     height: 100%;
@@ -184,7 +203,7 @@ export default {
   }
   .tools-manipulation {
     .manipulation-btn {
-      position: absolute;
+      position: fixed;
       width: 64px;
       height: 64px;
       display: block;
@@ -234,7 +253,7 @@ export default {
     }
     .manipulation-list {
       display: none;
-      position: absolute;
+      position: fixed;
       left: 0;
       right: 0;
       margin: 0 auto;

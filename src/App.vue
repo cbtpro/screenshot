@@ -6,6 +6,7 @@
       src="./assets/logo.png"
     >
     <HelloWorld msg="Welcome to Your Vue.js App" />
+    <HelloWorld msg="Welcome to Your Vue.js App" />
     <component
       :is="isScreenshot"
       :css="screenshotStyles"
@@ -89,10 +90,10 @@ html, body {
 } 
 .msg {
 	display: none;
-  position: absolute;
+  position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -20%);
+  transform: translate(-50%, -50%);
   z-index: 1000;
 }
 .msg p{
