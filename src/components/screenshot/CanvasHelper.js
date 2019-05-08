@@ -83,11 +83,14 @@ class CanvasEvents extends CanvasTools {
     this.handleGestureEnd = this.handleGestureEnd.bind(this);
   }
   getGesturePointFromEvent(evt) {
+    let rect = this.canvas.getBoundingClientRect();
+    // let x = evt.clientX - rect.left * (this.canvas.width / rect.width)
+    // let y = evt.clientY - rect.top * (this.canvas.width / rect.height)
     if (evt.targetTouches) {
       let [firstTouch] = evt.targetTouches;
       return firstTouch ? { x: parseInt(firstTouch.clientX), y: parseInt(firstTouch.clientY) } : {};
     } else {
-      return { x: parseInt(evt.clientX), y: (evt.clientY) };
+      return { x: parseInt(evt.clientX - rect.left), y: (evt.clientY - rect.top) };
     }
   }
   handleGestureStart(evt) {
@@ -197,7 +200,7 @@ export default class CanvasHelper extends CanvasEvents {
       this.context.putImageData(this.history[--this.stepNumber], 0, 0);
     }
   }
-  repeat() {
+  restore() {
     let current = this.stepNumber + 1;
     if (this.history.length > 0 && current < this.history.length) {
       this.context.putImageData(this.history[++this.stepNumber], 0, 0);
