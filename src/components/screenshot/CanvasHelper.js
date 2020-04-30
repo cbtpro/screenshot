@@ -84,13 +84,13 @@ class CanvasEvents extends CanvasTools {
   }
   getGesturePointFromEvent(evt) {
     let rect = this.canvas.getBoundingClientRect();
-    // let x = evt.clientX - rect.left * (this.canvas.width / rect.width)
-    // let y = evt.clientY - rect.top * (this.canvas.width / rect.height)
+    let xOffset = rect.left * (this.canvas.width / rect.width)
+    let yOffset = rect.top * (this.canvas.height / rect.height)
     if (evt.targetTouches) {
       let [firstTouch] = evt.targetTouches;
-      return firstTouch ? { x: parseInt(firstTouch.clientX), y: parseInt(firstTouch.clientY) } : {};
+      return firstTouch ? { x: parseInt(firstTouch.clientX - xOffset), y: parseInt(firstTouch.clientY - yOffset) } : {};
     } else {
-      return { x: parseInt(evt.clientX - rect.left), y: (evt.clientY - rect.top) };
+      return { x: parseInt(evt.clientX - xOffset), y: (evt.clientY - yOffset) };
     }
   }
   handleGestureStart(evt) {
